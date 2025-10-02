@@ -1,18 +1,14 @@
-// Gmail Configuration for Contact Form
-// Copy this file to config.js and replace these values with your actual Gmail credentials
+// MongoDB Configuration for Contact Form
+// This file shows the environment variables needed for the backend
 
 export const config = {
-    // Your Gmail address (the email that will receive contact form messages)
-    EMAIL_USER: 'your-email@gmail.com',
+    // MongoDB Connection URI
+    // For local development: 'mongodb://localhost:27017/beryfy'
+    // For MongoDB Atlas: 'mongodb+srv://username:password@cluster.mongodb.net/beryfy'
+    MONGODB_URI: 'mongodb://localhost:27017/beryfy',
     
-    // Your Gmail App Password (NOT your regular Gmail password)
-    // To get an App Password:
-    // 1. Go to your Google Account settings
-    // 2. Security > 2-Step Verification (must be enabled)
-    // 3. App passwords > Generate app password
-    // 4. Select "Mail" and generate password
-    // 5. Use this generated password here (16 characters, no spaces)
-    EMAIL_PASS: 'your-app-password-here',
+    // Frontend URL (for CORS configuration)
+    FRONTEND_URL: 'http://localhost:5173',
     
     // Server Configuration
     PORT: 5000,

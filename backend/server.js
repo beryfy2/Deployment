@@ -1,10 +1,14 @@
 import express from "express";
-import nodemailer from "nodemailer";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
+import connectDB from "./config/database.js";
+import Contact from "./models/Contact.js";
 
 dotenv.config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,110 +28,184 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Test route
 app.get("/", (req, res) => {
-    res.json({ message: "✅ Beryfy Backend Server is running!" });
+    res.json({
+        message: "✅ Beryfy Backend Server is running!",
+        database: "MongoDB Connected",
+        endpoints: {
+            contact: "POST /api/contact - Submit contact form",
+            contacts: "GET /api/contacts - Get all contacts (admin)",
+            health: "GET /api/health - Health check"
+        }
+    });
 });
 
-// Contact form route
+// Health check route
+app.get("/api/health", (req, res) => {
+    res.json({
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        database: "connected"
+    });
+});
+
+// Contact form route - Save to MongoDB
 app.post("/api/contact", async (req, res) => {
-    const { name, email, subject, message } = req.body;
-
-    if (!name || !email || !subject || !message) {
-        return res
-            .status(400)
-            .json({ success: false, message: "All fields are required" });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        return res
-            .status(400)
-            .json({ success: false, message: "Please provide a valid email address" });
-    }
-
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error("❌ Missing email configuration in environment variables");
-        return res.status(500).json({
-            success: false,
-            message: "Email service configuration is missing",
-        });
-    }
-
     try {
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
+        const { name, email, subject, message } = req.body;
+
+        // Basic validation
+        if (!name || !email || !subject || !message) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
+        }
+
+        // Get client IP and User Agent for tracking
+        const ipAddress = req.headers['x-forwarded-for'] ||
+            req.connection.remoteAddress ||
+            req.socket.remoteAddress ||
+            (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
+        const userAgent = req.headers['user-agent'];
+
+        // Create new contact document
+        const newContact = new Contact({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            subject: subject.trim(),
+            message: message.trim(),
+            ipAddress,
+            userAgent
         });
 
-        await transporter.verify();
+        // Save to MongoDB
+        const savedContact = await newContact.save();
 
-        function sanitize(str) {
-            return str.replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-        }
+        console.log(`✅ New contact form submission saved:`, {
+            id: savedContact._id,
+            name: savedContact.name,
+            email: savedContact.email,
+            subject: savedContact.subject,
+            timestamp: savedContact.createdAt
+        });
 
-        const mailOptions = {
-            from: `"${sanitize(name)} via Beryfy Website" <${process.env.EMAIL_USER}>`,
-            replyTo: email,
-            to: process.env.EMAIL_USER,
-            subject: `Beryfy | New Client Inquiry: ${sanitize(subject)}`,
-            text: `Name: ${sanitize(name)}\nEmail: ${sanitize(email)}\nSubject: ${sanitize(subject)}\n\nMessage:\n${sanitize(message)}`,
-            html: `
-        <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-            
-            <!-- Header -->
-            <div style="background-color: #6a00ff; padding: 20px; color: #ffffff; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">Beryfy</h1>
-                <p style="margin: 5px 0 0 0; font-size: 14px;">New Client Inquiry</p>
-            </div>
+        res.status(201).json({
+            success: true,
+            message: "✅ Thank you! Your message has been received successfully. We'll get back to you soon.",
+            contactId: savedContact._id
+        });
 
-            <!-- Body -->
-            <div style="padding: 20px; background-color: #f8f9fa;">
-                <h2 style="font-size: 18px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Submission Details</h2>
-                <p><strong>Name:</strong> ${sanitize(name)}</p>
-                <p><strong>Email:</strong> ${sanitize(email)}</p>
-                <p><strong>Subject:</strong> ${sanitize(subject)}</p>
+    } catch (error) {
+        console.error("❌ Error saving contact form:", error);
 
-                <h3 style="color: #333; margin-top: 20px;">Message:</h3>
-                <p style="line-height: 1.6; color: #555;">${sanitize(message).replace(/\n/g, '<br>')}</p>
-            </div>
-
-            <!-- Footer -->
-            <div style="background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #777;">
-                <p><strong>Beryfy</strong> | www.beryfy.co.in</p>
-                <p>This email was sent via the Beryfy website contact form.</p>
-            </div>
-        </div>
-    `,
-        };
-
-
-        await transporter.sendMail(mailOptions);
-
-        res.json({ success: true, message: "✅ Message sent successfully!" });
-    } catch (err) {
-        console.error("❌ Error sending email:", err);
-
-        if (err.code === "EAUTH") {
-            return res.status(500).json({
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
                 success: false,
-                message:
-                    "Email authentication failed. Please check your email credentials.",
-            });
-        } else if (err.code === "ECONNECTION") {
-            return res.status(500).json({
-                success: false,
-                message: "Unable to connect to email service. Please try again later.",
-            });
-        } else {
-            return res.status(500).json({
-                success: false,
-                message: "Failed to send message. Please try again later.",
+                message: "Validation failed",
+                errors: validationErrors
             });
         }
+
+        // Handle duplicate email (if you want to prevent spam)
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: "A message from this email was recently submitted. Please wait before submitting again."
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to submit your message. Please try again later."
+        });
+    }
+});
+
+// Get all contacts (Admin route - you might want to add authentication)
+app.get("/api/contacts", async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const status = req.query.status;
+        const skip = (page - 1) * limit;
+
+        // Build query
+        const query = {};
+        if (status) {
+            query.status = status;
+        }
+
+        // Get contacts with pagination
+        const contacts = await Contact.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .select('-__v'); // Exclude version field
+
+        // Get total count for pagination
+        const total = await Contact.countDocuments(query);
+
+        res.json({
+            success: true,
+            data: contacts,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching contacts:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch contacts"
+        });
+    }
+});
+
+// Update contact status (Admin route)
+app.patch("/api/contacts/:id/status", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!['new', 'read', 'responded', 'archived'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid status value"
+            });
+        }
+
+        const updatedContact = await Contact.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedContact) {
+            return res.status(404).json({
+                success: false,
+                message: "Contact not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Contact status updated successfully",
+            data: updatedContact
+        });
+
+    } catch (error) {
+        console.error("❌ Error updating contact status:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to update contact status"
+        });
     }
 });
 

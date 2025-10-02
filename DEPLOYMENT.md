@@ -16,7 +16,7 @@ Beryfy/
 - GitHub account
 - Render account (free tier available)
 - Netlify account (free tier available)
-- Gmail account with App Password for email functionality
+- MongoDB Atlas account (free tier available) or local MongoDB instance
 
 ## Backend Deployment on Render
 
@@ -49,17 +49,18 @@ Beryfy/
    Go to Environment tab and add:
    ```
    NODE_ENV=production
-   EMAIL_USER=your-gmail@gmail.com
-   EMAIL_PASS=your-gmail-app-password
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/beryfy
    FRONTEND_URL=https://your-netlify-app.netlify.app
    ```
 
-4. **Gmail App Password Setup:**
-   - Go to Google Account Settings
-   - Security → 2-Step Verification (enable if not already)
-   - App Passwords → Generate new password
-   - Select "Mail" and copy the 16-character password
-   - Use this password for `EMAIL_PASS`
+4. **MongoDB Atlas Setup:**
+   - Go to [MongoDB Atlas](https://cloud.mongodb.com/)
+   - Create a free cluster
+   - Create a database user
+   - Whitelist your IP address (or use 0.0.0.0/0 for all IPs)
+   - Get your connection string from "Connect" → "Connect your application"
+   - Replace `<password>` with your database user password
+   - Use this connection string for `MONGODB_URI`
 
 5. **Deploy:**
    - Click "Create Web Service"
@@ -139,8 +140,7 @@ Visit your backend URL to see: `{"message": "✅ Beryfy Backend Server is runnin
 ### Backend (Render)
 ```
 NODE_ENV=production
-EMAIL_USER=your-gmail@gmail.com
-EMAIL_PASS=your-16-character-app-password
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/beryfy
 FRONTEND_URL=https://your-netlify-app.netlify.app
 ```
 
@@ -157,10 +157,11 @@ VITE_API_URL=https://your-render-app.onrender.com
    - Ensure `FRONTEND_URL` in backend matches your Netlify URL exactly
    - Check that both HTTP and HTTPS are handled correctly
 
-2. **Email Not Sending:**
-   - Verify Gmail App Password is correct
-   - Ensure 2-Step Verification is enabled on Gmail
-   - Check Render logs for email authentication errors
+2. **Database Connection Issues:**
+   - Verify MongoDB URI is correct
+   - Check if IP address is whitelisted in MongoDB Atlas
+   - Ensure database user has proper permissions
+   - Check Render logs for database connection errors
 
 3. **Build Failures:**
    - Check Node.js version compatibility
@@ -188,6 +189,64 @@ VITE_API_URL=https://your-render-app.onrender.com
    - Visit your Netlify URL
    - Test contact form functionality
    - Check browser console for errors
+
+3. **Database Test:**
+   - Submit a contact form
+   - Check MongoDB Atlas dashboard for new documents
+   - Use GET /api/contacts to verify data is saved
+
+## API Endpoints
+
+The backend now provides the following endpoints:
+
+### Public Endpoints
+- `POST /api/contact` - Submit contact form
+- `GET /api/health` - Health check
+
+### Admin Endpoints (No authentication implemented yet)
+- `GET /api/contacts` - Get all contact submissions with pagination
+  - Query parameters: `page`, `limit`, `status`
+  - Example: `/api/contacts?page=1&limit=10&status=new`
+- `PATCH /api/contacts/:id/status` - Update contact status
+  - Body: `{"status": "read|responded|archived"}`
+
+### Contact Data Structure
+```json
+{
+  "_id": "ObjectId",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "subject": "Project Inquiry",
+  "message": "Hello, I need help with...",
+  "status": "new",
+  "ipAddress": "192.168.1.1",
+  "userAgent": "Mozilla/5.0...",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+## Managing Contact Submissions
+
+### Viewing Submissions
+You can view contact submissions by:
+1. **MongoDB Atlas Dashboard:** Browse collections directly
+2. **API Endpoint:** GET `/api/contacts` for programmatic access
+3. **Database Tools:** Use MongoDB Compass or similar tools
+
+### Contact Status Management
+Each contact has a status field:
+- `new` - Just submitted (default)
+- `read` - Viewed by admin
+- `responded` - Response sent to client
+- `archived` - Completed/closed
+
+Update status via API:
+```bash
+curl -X PATCH https://your-render-app.onrender.com/api/contacts/CONTACT_ID/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "read"}'
+```
 
 ## Monitoring and Maintenance
 
