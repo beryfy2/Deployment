@@ -65,12 +65,12 @@ export const servicesItems = [
 export const statsItems = [
     {
         id: 1,
-        value: "N/A",
+        value: "1",
         text: "Successful projects delivered across design, development, and strategy.",
     },
     {
         id: 2,
-        value: "N/A",
+        value: "90%",
         text: "Commitment to delivering creative, reliable, and quality solutions.",
     },
     {
@@ -201,53 +201,79 @@ export const testimonialsItems = [
 ];
 
 export const portfolioItems = [
-    {
-        id: 1,
-        image: "/images/img-3.png",
-        title: "E-commerce Platform",
-        category: "Web Development",
-        description: "Modern e-commerce solution with seamless user experience",
-        width: 318,
-        height: 332,
-        featured: true
-    },
-    {
-        id: 2,
-        image: "/images/img-2.png",
-        title: "Mobile App Design",
-        category: "UI/UX Design",
-        description: "Intuitive mobile application design",
-        width: 160,
-        height: 167,
-        featured: false
-    },
-    {
-        id: 3,
-        image: "/images/img-1.png",
-        title: "Brand Identity",
-        category: "Graphic Design",
-        description: "Complete brand identity package",
-        width: 200,
-        height: 200,
-        featured: false
-    },
-    {
-        id: 4,
-        image: "/images/img-2.png",
-        title: "Dashboard Design",
-        category: "UI/UX Design",
-        description: "Analytics dashboard with modern interface",
-        width: 200,
-        height: 200,
-        featured: false
-    }
+     // {
+    //     id: 1,
+    //     image: "/images/img-3.png",
+    //     screenshots: [
+    //         "/images/img-3.png",
+    //         "/images/img-3-1.png",
+    //     ],
+    //     title: "E-commerce Platform",
+    //     category: "Web Development",
+    //     description: "Modern e-commerce solution with seamless user experience",
+    //     width: 318,
+    //     height: 332,
+    //     featured: true
+    // },
+    // {
+    //     id: 2,
+    //     image: "/images/img-2.png",
+    //     screenshots: [
+    //         "/images/img-2.png",
+    //         "/images/img-2-1.png",
+    //     ],
+    //     title: "Mobile App Design",
+    //     category: "UI/UX Design",
+    //     description: "Intuitive mobile application design",
+    //     width: 160,
+    //     height: 167,
+    //     featured: false
+    // },
+    // {
+    //     id: 3,
+    //     image: "/images/img-1.png",
+    //     screenshots: [
+    //         "/images/img-1.png",
+    //         "/images/img-1-1.png"
+    //     ],
+    //     title: "Brand Identity",
+    //     category: "Graphic Design",
+    //     description: "Complete brand identity package",
+    //     width: 200,
+    //     height: 200,
+    //     featured: false
+    // },
+    // {
+    //     id: 4,
+    //     image: "/images/img-2.png",
+    //     screenshots: [
+    //         "/images/img-2.png",
+    //         "/images/img-2-1.png"
+    //     ],
+    //     title: "Dashboard Design",
+    //     category: "UI/UX Design",
+    //     description: "Analytics dashboard with modern interface",
+    //     width: 200,
+    //     height: 200,
+    //     featured: false
+    // }
 ];
 
 export const mainProject = {
     image: "/images/img-1.png",
-    title: "Premium Digital Solutions",
+    screenshots: [
+        "/images/img-1.png",
+        "/images/img-1-1.png",
+        "/images/img-1-2.png",
+        "/images/img-1-3.png",
+        "/images/img-1-4.png",
+        "/images/img-1-5.png",
+        "/images/img-1-6.png",
+    ],
+    title: "OneFlow",
     category: "Full Stack Development",
-    description: "A comprehensive digital platform that showcases our expertise in modern web technologies, featuring responsive design, seamless user experience, and cutting-edge functionality.",
+    description:
+        "OneFlow combines project planning, team collaboration, task tracking, and billing into a single seamless workflow. It enables teams to manage everything—from tasks to finances—without switching tools.",
     technologies: ["React", "Node.js", "Express"],
     liveUrl: "#",
     githubUrl: "#"
