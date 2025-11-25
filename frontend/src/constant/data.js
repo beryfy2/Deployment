@@ -274,9 +274,9 @@ export const mainProject = {
     category: "Full Stack Development",
     description:
         "OneFlow combines project planning, team collaboration, task tracking, and billing into a single seamless workflow. It enables teams to manage everything—from tasks to finances—without switching tools.",
-    technologies: ["React", "Node.js", "Express"],
+    technologies: ["React", "Node.js", "Express", "MySQL"],
     liveUrl: "#",
-    githubUrl: "#"
+    githubUrl: "https://github.com/Ankit19102004/odoo-final"
 };
 
 
