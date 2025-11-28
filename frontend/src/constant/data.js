@@ -295,7 +295,7 @@ export const footerItems = [
         title: "Product",
         links: [
             { label: "Features", url: "#features" },
-            { label: "Pricing", url: "/Pricing.pdf", external: true },
+            { label: "Pricing", url: "/UpdatedPricing.pdf", external: true },
             { label: "Support", url: "mailto:beryfy2@gmail.com" },
         ],
     },
